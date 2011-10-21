@@ -41,9 +41,9 @@ BEGIN {
                                 my $value = shift;
                                 die "invalid value '$value' for attribute '$name'"
                                     unless $validator->($value);
-                                mop::internal::instance::set_slot_at( $::SELF, $name, \$value );
+                                $::CLASS->set_slot_at( $::SELF, $name, \$value );
                             }
-                            mop::internal::instance::get_slot_at( $::SELF, $name )
+                            $::CLASS->get_slot_at( $::SELF, $name )
                         }
                     )
                 );

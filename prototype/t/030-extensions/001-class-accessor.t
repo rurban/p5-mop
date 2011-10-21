@@ -23,8 +23,8 @@ BEGIN {
                     $::Method->new(
                         name => $accessor_name,
                         body => sub {
-                            mop::internal::instance::set_slot_at( $::SELF, $name, \(shift) ) if @_;
-                            mop::internal::instance::get_slot_at( $::SELF, $name )
+                            $::CLASS->set_slot_at( $::SELF, $name, \(shift) ) if @_;
+                            $::CLASS->get_slot_at( $::SELF, $name )
                         }
                     )
                 );
