@@ -65,38 +65,6 @@ sub init {
                     }
                 }
             ),
-            'CREATE'   => mop::internal::method::create(
-                name => 'CREATE',
-                body => sub {
-                    my $args = shift;
-                    my $data = {};
-
-                    foreach my $class ( @{ mop::internal::class::get_mro( $::SELF ) } ) {
-                        my $attrs = mop::internal::instance::get_slot_at( $class, '$attributes' );
-                        foreach my $attr_name ( keys %$attrs ) {
-                            unless ( exists $data->{ $attr_name } ) {
-                                my $param_name = $attr_name;
-                                $param_name =~ s/^\$//;
-
-                                if ( exists $args->{ $param_name } ) {
-                                    my $value = $args->{ $param_name };
-                                    $data->{ $attr_name } = \$value;
-                                }
-                                else {
-                                    $data->{ $attr_name } = mop::internal::attribute::get_initial_value_for_instance(
-                                        $attrs->{ $attr_name }
-                                    );
-                                }
-
-                            }
-                        }
-                    }
-
-                    (get_stash_for( $::SELF ) || die "Could not find stash for class(" . $::SELF->get_name . ")")->bless(
-                        mop::internal::instance::create( \$::SELF, $data )
-                    );
-                }
-            )
         }
     );
 
@@ -106,22 +74,7 @@ sub init {
         version    => '0.01',
         authority  => 'cpan:STEVAN',
         attributes => {},
-        methods    => {
-            'new'   => mop::internal::method::create(
-                name => 'new',
-                body => sub {
-                    my %args = @_;
-                    my $self = $::SELF->CREATE( \%args );
-                    mop::internal::dispatcher::SUBDISPATCH(
-                        sub { mop::internal::class::get_constructor( $_[0] ) },
-                        1,
-                        $self,
-                        \%args,
-                    );
-                    $self;
-                }
-            ),
-        },
+        methods    => {},
     );
 
     $::Method = mop::internal::class::create(
@@ -132,8 +85,6 @@ sub init {
         superclass => $::Object,
         methods    => {},
         attributes => {
-            '$name' => mop::internal::attribute::create( name => '$name', initial_value => \(my $method_name) ),
-            '$body' => mop::internal::attribute::create( name => '$body', initial_value => \(my $method_body) ),
         },
     );
 
@@ -167,11 +118,7 @@ sub init {
     get_stash_for( $::Class )->bless( $::Attribute );
 
     get_stash_for( $::Method )->bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'add_method'} );
-    get_stash_for( $::Method )->bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'CREATE'}     );
-    get_stash_for( $::Method )->bless( mop::internal::instance::get_slot_at( $::Object, '$methods' )->{'new'}       );
 
-    get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Method, '$attributes' )->{'$name'}             );
-    get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Method, '$attributes' )->{'$body'}             );
     get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$name'}          );
     get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$initial_value'} );
 
@@ -225,6 +172,34 @@ sub init {
 
     ## class protocol
 
+    $::Class->add_method( mop::internal::method::create( name => 'CREATE', body => sub {
+        my $args = shift;
+        my $data = {};
+
+        foreach my $class ( @{ mop::internal::class::get_mro( $::SELF ) } ) {
+            my $attrs = mop::internal::instance::get_slot_at( $class, '$attributes' );
+            foreach my $attr_name ( keys %$attrs ) {
+                unless ( exists $data->{ $attr_name } ) {
+                    my $param_name = $attr_name;
+                    $param_name =~ s/^\$//;
+
+                    if ( exists $args->{ $param_name } ) {
+                        my $value = $args->{ $param_name };
+                        $data->{ $attr_name } = \$value;
+                    }
+                    else {
+                        $data->{ $attr_name } = mop::internal::attribute::get_initial_value_for_instance(
+                            $attrs->{ $attr_name }
+                        );
+                    }
+                }
+            }
+        }
+
+        (get_stash_for( $::SELF ) || die "Could not find stash for class(" . $::SELF->get_name . ")")->bless(
+            mop::internal::instance::create( \$::SELF, $data )
+        );
+    }));
     $::Class->add_method( mop::internal::method::create( name => 'FINALIZE', body => sub {
         $::SELF->set_superclass( $::Object )
             unless $::SELF->get_superclass;
@@ -237,6 +212,17 @@ sub init {
     ## $::Object
     ## --------------------------------
 
+    $::Object->add_method( mop::internal::method::create( name => 'new', body => sub {
+        my %args = @_;
+        my $self = $::SELF->CREATE( \%args );
+        mop::internal::dispatcher::SUBDISPATCH(
+            sub { mop::internal::class::get_constructor( $_[0] ) },
+            1,
+            $self,
+            \%args,
+        );
+        $self;
+    }));
     $::Object->add_method( mop::internal::method::create( name => 'id',    body => sub { mop::internal::instance::get_uuid( $::SELF )  } ) );
     $::Object->add_method( mop::internal::method::create( name => 'class', body => sub { mop::internal::instance::get_class( $::SELF ) } ) );
     $::Object->add_method( mop::internal::method::create( name => 'is_a',  body => sub { $::CLASS->equals( $_[0] ) || $::CLASS->is_subclass_of( $_[0] ) } ) );
@@ -297,6 +283,9 @@ sub init {
     $::Class->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \({}) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$constructor', initial_value => \(my $constructor) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$destructor',  initial_value => \(my $destructor) ) );
+
+    $::Method->add_attribute( $::Attribute->new( name => '$name', initial_value => \(my $method_name) ) );
+    $::Method->add_attribute( $::Attribute->new( name => '$body', initial_value => \(my $method_body) ) );
 
     ## --------------------------------
     ## enable metaclass compatibility checks
