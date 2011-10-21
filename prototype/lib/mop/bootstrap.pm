@@ -45,7 +45,9 @@ sub init {
         name       => 'Class',
         version    => '0.01',
         authority  => 'cpan:STEVAN',
-        attributes => {},
+        attributes => {
+            '$attributes' => mop::internal::attribute::create( name => '$attributes', initial_value => \({}) ),
+        },
         methods    => {
             'add_method' => mop::internal::method::create(
                 name => 'add_method',
@@ -128,6 +130,7 @@ sub init {
 
     get_stash_for( $::Class )->add_method( add_method => sub { mop::internal::method::execute( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'add_method'}, @_ ) } );
 
+    get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Class, '$attributes' )->{'$attributes'}        );
     get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$name'}          );
     get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$initial_value'} );
 
@@ -135,16 +138,22 @@ sub init {
     ## $::Class
     ## --------------------------------
 
+    ## instance access
+
+    $::Class->add_method( mop::internal::method::create( name => 'get_slot_at', body => sub { mop::internal::instance::get_slot_at( $_[0], $_[1] ) } ) );
+    $::Class->add_method( mop::internal::method::create( name => 'set_slot_at', body => sub { mop::internal::instance::set_slot_at( $_[0], $_[1], $_[2] ) } ) );
+    $::Class->add_method( mop::internal::method::create( name => 'get_slot', body => sub { mop::internal::instance::get_slot( $_[0] ) } ) );
+
     ## accessors
 
-    $::Class->add_method( mop::internal::method::create( name => 'get_name',        body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' )       } ) );
-    $::Class->add_method( mop::internal::method::create( name => 'get_version',     body => sub { mop::internal::instance::get_slot_at( $::SELF, '$version' )    } ) );
-    $::Class->add_method( mop::internal::method::create( name => 'get_authority',   body => sub { mop::internal::instance::get_slot_at( $::SELF, '$authority' )  } ) );
-    $::Class->add_method( mop::internal::method::create( name => 'get_superclass',  body => sub { mop::internal::instance::get_slot_at( $::SELF, '$superclass' ) } ) );
-    $::Class->add_method( mop::internal::method::create( name => 'get_methods',     body => sub { mop::internal::instance::get_slot_at( $::SELF, '$methods' )    } ) );
-    $::Class->add_method( mop::internal::method::create( name => 'get_attributes',  body => sub { mop::internal::instance::get_slot_at( $::SELF, '$attributes' ) } ) );
-    $::Class->add_method( mop::internal::method::create( name => 'get_destructor',  body => sub { mop::internal::class::get_destructor( $::SELF ) } ) );
-    $::Class->add_method( mop::internal::method::create( name => 'get_constructor', body => sub { mop::internal::class::get_constructor( $::SELF ) } ) );
+    $::Class->add_method( mop::internal::method::create( name => 'get_name',        body => sub { $::CLASS->get_slot_at( $::SELF, '$name' )       } ) );
+    $::Class->add_method( mop::internal::method::create( name => 'get_version',     body => sub { $::CLASS->get_slot_at( $::SELF, '$version' )    } ) );
+    $::Class->add_method( mop::internal::method::create( name => 'get_authority',   body => sub { $::CLASS->get_slot_at( $::SELF, '$authority' )  } ) );
+    $::Class->add_method( mop::internal::method::create( name => 'get_superclass',  body => sub { $::CLASS->get_slot_at( $::SELF, '$superclass' ) } ) );
+    $::Class->add_method( mop::internal::method::create( name => 'get_methods',     body => sub { $::CLASS->get_slot_at( $::SELF, '$methods' )    } ) );
+    $::Class->add_method( mop::internal::method::create( name => 'get_attributes',  body => sub { $::CLASS->get_slot_at( $::SELF, '$attributes' ) } ) );
+    $::Class->add_method( mop::internal::method::create( name => 'get_destructor',  body => sub { $::CLASS->get_slot_at( $::SELF, '$destructor' ) } ) );
+    $::Class->add_method( mop::internal::method::create( name => 'get_constructor', body => sub { $::CLASS->get_slot_at( $::SELF, '$constructor' ) } ) );
     $::Class->add_method( mop::internal::method::create( name => 'get_mro',         body => sub { mop::internal::class::get_mro( $::SELF ) } ) );
     $::Class->add_method( mop::internal::method::create( name => 'attribute_class', body => sub { $::Attribute } ) );
     $::Class->add_method( mop::internal::method::create( name => 'method_class',    body => sub { $::Method } ) );
@@ -157,21 +166,21 @@ sub init {
 
     $::Class->add_method( mop::internal::method::create( name => 'set_constructor', body => sub {
         my $constructor = shift;
-        mop::internal::instance::set_slot_at( $::SELF, '$constructor', \$constructor );
+        $::CLASS->set_slot_at( $::SELF, '$constructor', \$constructor );
     }));
 
     $::Class->add_method( mop::internal::method::create( name => 'set_destructor', body => sub {
         my $destructor = shift;
-        mop::internal::instance::set_slot_at( $::SELF, '$destructor', \$destructor );
+        $::CLASS->set_slot_at( $::SELF, '$destructor', \$destructor );
     }));
 
     $::Class->add_method( mop::internal::method::create( name => 'set_superclass', body => sub {
         my $superclass = shift;
-        mop::internal::instance::set_slot_at( $::SELF, '$superclass', \$superclass );
+        $::CLASS->set_slot_at( $::SELF, '$superclass', \$superclass );
     }));
     $::Class->add_method( mop::internal::method::create( name => 'add_attribute', body => sub {
         my $attr = shift;
-        $::SELF->get_attributes->{ mop::internal::instance::get_slot_at( $attr, '$name' ) } = $attr;
+        $::SELF->get_attributes->{ $attr->class->get_slot_at( $attr, '$name' ) } = $attr;
     }));
 
     ## predicate methods ...
@@ -186,7 +195,7 @@ sub init {
         my $data = {};
 
         foreach my $class ( @{ mop::internal::class::get_mro( $::SELF ) } ) {
-            my $attrs = mop::internal::instance::get_slot_at( $class, '$attributes' );
+            my $attrs = $class->class->get_slot_at( $class, '$attributes' );
             foreach my $attr_name ( keys %$attrs ) {
                 unless ( exists $data->{ $attr_name } ) {
                     my $param_name = $attr_name;
@@ -240,8 +249,8 @@ sub init {
     ## $::Method
     ## --------------------------------
 
-    $::Method->add_method( mop::internal::method::create( name => 'get_name', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' ) } ) );
-    $::Method->add_method( mop::internal::method::create( name => 'get_body', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$body' ) } ) );
+    $::Method->add_method( mop::internal::method::create( name => 'get_name', body => sub { $::CLASS->get_slot_at( $::SELF, '$name' ) } ) );
+    $::Method->add_method( mop::internal::method::create( name => 'get_body', body => sub { $::CLASS->get_slot_at( $::SELF, '$body' ) } ) );
     $::Method->add_method( mop::internal::method::create( name => 'execute', body => sub {
         my ($invocant, @args) = @_;
         mop::internal::method::execute( $::SELF, $invocant, @args );
@@ -251,8 +260,8 @@ sub init {
     ## $::Attribute
     ## --------------------------------
 
-    $::Attribute->add_method( mop::internal::method::create( name => 'get_name',          body => sub { mop::internal::instance::get_slot_at( $::SELF, '$name' ) } ) );
-    $::Attribute->add_method( mop::internal::method::create( name => 'get_initial_value', body => sub { mop::internal::instance::get_slot_at( $::SELF, '$initial_value' ) } ) );
+    $::Attribute->add_method( mop::internal::method::create( name => 'get_name',          body => sub { $::CLASS->get_slot_at( $::SELF, '$name' ) } ) );
+    $::Attribute->add_method( mop::internal::method::create( name => 'get_initial_value', body => sub { $::CLASS->get_slot_at( $::SELF, '$initial_value' ) } ) );
     $::Attribute->add_method( mop::internal::method::create( name => 'get_initial_value_for_instance', body => sub {
         mop::internal::attribute::get_initial_value_for_instance( $::SELF )
     }));
@@ -288,7 +297,6 @@ sub init {
     $::Class->add_attribute( $::Attribute->new( name => '$version',     initial_value => \(my $class_version) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$authority',   initial_value => \(my $class_authority) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$superclass',  initial_value => \(my $superclass) ) );
-    $::Class->add_attribute( $::Attribute->new( name => '$attributes',  initial_value => \({}) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$methods',     initial_value => \({}) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$constructor', initial_value => \(my $constructor) ) );
     $::Class->add_attribute( $::Attribute->new( name => '$destructor',  initial_value => \(my $destructor) ) );
@@ -301,7 +309,7 @@ sub init {
     ## --------------------------------
 
     $::Class->set_constructor( $::Method->new( name => 'BUILD', body => sub {
-        my $superclass = mop::internal::instance::get_slot_at( $::SELF, '$superclass' );
+        my $superclass = $::CLASS->get_slot_at( $::SELF, '$superclass' );
         if ( $superclass ) {
             my $compatible = mop::internal::class::get_compatible_class( $::CLASS, mop::internal::instance::get_class( $superclass ) );
             if ( !defined( $compatible ) ) {
