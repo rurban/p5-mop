@@ -472,6 +472,14 @@ sub init {
         }
     } ) );
 
+    ## and, add the final, more generic version of add_method
+
+    $::Class->add_method( $::Method->new( name => 'add_method', body => sub {
+        my $method = shift;
+        my $method_class = mop::internal::instance::get_class( $method );
+        $::CLASS->get_slot_at( $::SELF, '$methods' )->{ $method_class->get_slot_at( $method, '$name' ) } = $method;
+    }));
+
     ## --------------------------------
     ## END BOOTSTRAP
     ## --------------------------------
