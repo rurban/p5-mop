@@ -3,29 +3,31 @@ package mop::internal::instance;
 use strict;
 use warnings;
 
+use Scalar::Footnote;
 use UUID::Tiny qw/create_uuid_as_string UUID_V4/;
 
 sub create {
     my ($class, $slots) = @_;
-    return +{
-        uuid  => create_uuid_as_string(UUID_V4),
-        class => $class,
-        slots => $slots
-    }
+    my $instance = {
+        %$slots,
+    };
+    Scalar::Footnote::set( $instance, class => $class );
+    Scalar::Footnote::set( $instance, uuid  => create_uuid_as_string(UUID_V4) );
+    return $instance;
 }
 
-sub get_uuid  { (shift)->{'uuid'}     }
-sub get_class { ${(shift)->{'class'}} }
-sub get_slot  { (shift)->{'slots'}    }
+sub get_uuid  { Scalar::Footnote::get( $_[0], 'uuid' )       }
+sub get_class { ${ Scalar::Footnote::get( $_[0], 'class' ) } }
+sub get_slot  { $_[0] }
 
 sub get_slot_at {
     my ($instance, $name) = @_;
-    ${ $instance->{'slots'}->{ $name } || \undef }
+    ${ get_slot( $instance )->{ $name } || \undef }
 }
 
 sub set_slot_at {
     my ($instance, $name, $value) = @_;
-    $instance->{'slots'}->{ $name } = $value
+    get_slot( $instance )->{ $name } = $value;
 }
 
 1;

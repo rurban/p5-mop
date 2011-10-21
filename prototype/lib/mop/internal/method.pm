@@ -26,9 +26,28 @@ sub create {
 sub execute {
     my $method   = shift;
     my $invocant = shift;
-    my $class    = mop::internal::instance::get_class( $invocant );
-    my $instance = mop::internal::instance::get_slot( $invocant );
-    my $body     = mop::internal::instance::get_slot_at( $method, '$body' );
+
+    my $class = mop::internal::instance::get_class( $invocant );
+    my $method_class = mop::internal::instance::get_class( $method );
+
+    # if these are of the class $::Class, we can use the internals directly. if
+    # they aren't, we have to call a method. we can't just always call a method
+    # because otherwise this throws $method->execute into an infinite loop
+    # (since that is itself a method call).
+    # !$class can be true occasionally during global destruction
+    my ($instance, $body);
+    if ( !$class || ( mop::internal::instance::get_uuid( $class ) eq mop::internal::instance::get_uuid( $::Class ) ) ) {
+        $instance = mop::internal::instance::get_slot( $invocant );
+    }
+    else {
+        $instance = $class->get_slot( $invocant );
+    }
+    if ( !$method_class || ( mop::internal::instance::get_uuid( $method_class ) eq mop::internal::instance::get_uuid( $::Method ) ) ) {
+        $body = mop::internal::instance::get_slot_at( $method, '$body' );
+    }
+    else {
+        $body = $method_class->get_slot_at( $method, '$body' );
+    }
 
     PadWalker::set_closed_over( $body, {
         %$instance,
