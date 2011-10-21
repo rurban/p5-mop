@@ -50,9 +50,7 @@ sub init {
         name       => 'Class',
         version    => '0.01',
         authority  => 'cpan:STEVAN',
-        attributes => {
-            '$attributes' => mop::internal::attribute::create( name => '$attributes', initial_value => \({}) ),
-        },
+        attributes => {},
         methods    => {
             'add_method' => mop::internal::method::create(
                 name => 'add_method',
@@ -98,8 +96,7 @@ sub init {
         authority  => 'cpan:STEVAN',
         superclass => $::Object,
         methods    => {},
-        attributes => {
-        },
+        attributes => {},
     );
 
     $::Attribute = mop::internal::class::create(
@@ -109,10 +106,7 @@ sub init {
         authority  => 'cpan:STEVAN',
         superclass => $::Object,
         methods    => {},
-        attributes => {
-            '$name'          => mop::internal::attribute::create( name => '$name',          initial_value => \(my $attribute_name) ),
-            '$initial_value' => mop::internal::attribute::create( name => '$initial_value', initial_value => \(my $initial_value)  ),
-        },
+        attributes => {},
     );
 
     ## --------------------------------
@@ -134,10 +128,6 @@ sub init {
     get_stash_for( $::Method )->bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'add_method'} );
 
     get_stash_for( $::Class )->add_method( add_method => sub { mop::internal::method::execute( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'add_method'}, @_ ) } );
-
-    get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Class, '$attributes' )->{'$attributes'}        );
-    get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$name'}          );
-    get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$initial_value'} );
 
     ## --------------------------------
     ## $::Class
@@ -440,6 +430,17 @@ sub init {
             );
         }
     }
+
+    ## add enough attributes manually for add_attribute and $::Attribute->new
+    ## to work
+
+    mop::internal::instance::get_slot_at( $::Class, '$attributes' )->{'$attributes'} = mop::internal::attribute::create( name => '$attributes', initial_value => \({}) );
+    mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$name'} = mop::internal::attribute::create( name => '$name', initial_value => \(my $attribute_name) );
+    mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$initial_value'} = mop::internal::attribute::create( name => '$initial_value', initial_value => \(my $initial_value) );
+
+    get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Class, '$attributes' )->{'$attributes'}        );
+    get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$name'}          );
+    get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$initial_value'} );
 
     ## add in the attributes
 
