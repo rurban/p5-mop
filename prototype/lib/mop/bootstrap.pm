@@ -20,6 +20,13 @@ use mop::internal::dispatcher;
         return;
     }
 
+    sub new_stash_for {
+        my $class = shift;
+        my $uuid = mop::internal::instance::get_uuid( $class );
+        my $name = mop::internal::instance::get_slot_at( $class, '$name' );
+        $STASHES{ $uuid } = Package::Anon->new( $name );
+    }
+
     sub generate_stash_for {
         my $class = shift;
         my $uuid  = mop::internal::instance::get_uuid( $class );
@@ -107,10 +114,10 @@ sub init {
 
     mop::internal::instance::set_slot_at( $::Class, '$superclass', \$::Object );
 
-    generate_stash_for( $::Object    );
-    generate_stash_for( $::Class     );
-    generate_stash_for( $::Method    );
-    generate_stash_for( $::Attribute );
+    new_stash_for( $::Object    );
+    new_stash_for( $::Class     );
+    new_stash_for( $::Method    );
+    new_stash_for( $::Attribute );
 
     get_stash_for( $::Class )->bless( $::Object    );
     get_stash_for( $::Class )->bless( $::Class,    );
@@ -118,6 +125,8 @@ sub init {
     get_stash_for( $::Class )->bless( $::Attribute );
 
     get_stash_for( $::Method )->bless( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'add_method'} );
+
+    get_stash_for( $::Class )->add_method( add_method => sub { mop::internal::method::execute( mop::internal::instance::get_slot_at( $::Class, '$methods' )->{'add_method'}, @_ ) } );
 
     get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$name'}          );
     get_stash_for( $::Attribute )->bless( mop::internal::instance::get_slot_at( $::Attribute, '$attributes' )->{'$initial_value'} );
