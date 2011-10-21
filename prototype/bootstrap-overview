@@ -1,0 +1,80 @@
+REQUIREMENTS:
+- mop::internal::attribute::create
+- mop::internal::class::create
+- mop::internal::instance::get_slot_at
+- mop::internal::instance::get_class
+- mop::internal::instance::get_slot
+- mop::internal::instance::get_uuid
+- mop::internal::method::create
+- mop::internal::method::execute
+
+mop::internal::class::create, mop::internal::attribute::create, and
+mop::internal::method::create are hardcoded constructors that can create
+instances of $::Class, $::Attribute, and $::Method, respectively (not
+subclasses). mop::internal::instance::get_class and
+mop::internal::instance::get_uuid are the underlying implementations of
+mop::class_for and mop::id_for. mop::internal::instance::get_slot_at and
+mop::internal::instance::get_slot are the underlying (and self-contained)
+implementations of $::Class->get_slot_at and $::Class->get_slot. These will
+just be wrapped by the appropriate methods in $::Class during bootstrapping.
+mop::internal::method::execute is an implementation which needs to work on both
+bare $::Class/$::Method calls (without calling any methods, so $method->execute
+doesn't go into infinite recursion), as well as on subclasses (where it needs
+to call ->get_body, etc as methods, to account for overrides).
+
+STEP 1:
+- create $::Class, $::Object, $::Method, $::Attribute
+  - create classes using mop::internal::class::create
+- install add_method in $::Class - this version should also handle blessing
+  methods into $::Method's stash, and installing them into the invocant's stash
+  - create this method using mop::internal::method::create
+  - add_method uses mop::internal::class::get_slot_at,
+    mop::internal::method::execute, mop::internal::class::get_uuid
+    - mop::internal::method::execute uses mop::internal::class::get_class,
+      mop::internal::class::get_slot
+
+STEP 2:
+- tie the knot by manually setting Class's superclass to Object
+- create stashes for $::Class, $::Object, $::Method, $::Attribute
+  - we can do this manually, since the only thing that will exist in them at
+    this point is add_method, so it should be pretty simple (no need to actually
+    call GENSTASH)
+- bless $::Class, $::Object, $::Method, and $::Attribute into the $::Class stash
+- bless $::Class->add_method into the $::Method stash
+
+STEP 3:
+- use $::Class->add_method to install all of the methods into $::Class,
+  $::Object, $::Method, $::Attribute
+  - these methods are still being created with mop::internal::method::create,
+    but the existing version of add_method will handle that
+  - everything at this step and later should *only* be calling methods, no
+    mop::internals stuff (unless the mop::internals function that is called
+    doesn't call anything else in mop::internals - defining Class::get_slot_at
+    as mop::internal::class::get_slot_at is fine, for instance)
+    - mop::internal::method::execute is a special case here - it is specialized
+      to handle calling methods when appropriate, so it's safe to just make
+      Method->execute a wrapper around it
+
+STEP 4:
+- fix up the stashes manually by copying everything in $::Object over into
+  $::Class, $::Method, and $::Attribute
+
+STEP 5:
+- manually add the $name and $initial_value attributes to $::Attribute
+- manually add the $attributes attribute to $::Class
+
+STEP 6:
+- now that $::Class->add_attribute exists (since the initial add_method
+  implementation is updating the stash as it goes) and $::Attribute->new works,
+  use that to install all attributes into $::Class, $::Object, $::Method,
+  $::Attribute
+
+STEP 7:
+- now that $::Class->set_constructor exists, enable metaclass compatibility
+  checks by adding a constructor to $::Class
+
+STEP 8:
+- manually replace the existing $::Class->add_method with a version which
+  doesn't do any fiddling with stashes (at this point, any future classes
+  should take care of this in FINALIZE), and which uses method calls for
+  get_slot_at
