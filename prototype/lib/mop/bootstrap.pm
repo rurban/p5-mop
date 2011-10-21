@@ -367,8 +367,6 @@ sub init {
         );
         $self;
     }));
-    $::Object->add_method( mop::internal::method::create( name => 'id',    body => sub { mop::internal::instance::get_uuid( $::SELF )  } ) );
-    $::Object->add_method( mop::internal::method::create( name => 'class', body => sub { mop::internal::instance::get_class( $::SELF ) } ) );
     $::Object->add_method( mop::internal::method::create( name => 'is_a',  body => sub { $::CLASS->equals( $_[0] ) || $::CLASS->is_subclass_of( $_[0] ) } ) );
 
     ## --------------------------------

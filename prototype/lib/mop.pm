@@ -33,6 +33,9 @@ mop::bootstrap::init();
 
 sub import { mop::syntax->setup_for( caller ) }
 
+sub class_for { mop::internal::instance::get_class( $_[0] ) }
+sub id_for    { mop::internal::instance::get_uuid( $_[0] )  }
+
 1;
 
 __END__

@@ -23,7 +23,7 @@ is($bar->get_name, 'bar', '... got the right name for bar');
 
 my $foo = Foo->new;
 ok($foo->is_a( Foo ), '... this is a Foo');
-is($foo->class, Foo, '... this is a Foo');
+is(mop::class_for($foo), Foo, '... this is a Foo');
 
 is($foo->bar(10), 10, '... returns what it is given');
 

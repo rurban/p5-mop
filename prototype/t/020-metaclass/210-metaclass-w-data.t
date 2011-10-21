@@ -22,7 +22,7 @@ BEGIN {
     }
 }
 
-is MetaWithData->class, $::Class, '... got the class we expected';
+is mop::class_for(MetaWithData), $::Class, '... got the class we expected';
 ok MetaWithData->is_a( $::Object ), '... MetaWithData is an Object';
 ok MetaWithData->is_a( $::Class ), '... MetaWithData is a Class';
 ok MetaWithData->is_subclass_of( $::Object ), '... MetaWithData is a subclass of Object';
@@ -45,7 +45,7 @@ BEGIN {
     }
 }
 
-is Foo->class, MetaWithData, '... got the class we expected';
+is mop::class_for(Foo), MetaWithData, '... got the class we expected';
 ok Foo->is_a( $::Object ), '... Foo is an Object';
 ok Foo->is_a( $::Class ), '... Foo is a Class';
 ok Foo->is_a( MetaWithData ), '... Foo is a MetaWithData';
@@ -53,7 +53,7 @@ ok Foo->is_subclass_of( $::Object ), '... Foo is a subclass of Object';
 
 is_deeply Foo->get_data, [], '... called the static method on Foo';
 
-is Bar->class, MetaWithData, '... got the class we expected';
+is mop::class_for(Bar), MetaWithData, '... got the class we expected';
 ok Bar->is_a( $::Object ), '... Bar is an Object';
 ok Bar->is_a( $::Class ), '... Bar is a Class';
 ok Bar->is_a( MetaWithData ), '... Bar is a MetaWithData';

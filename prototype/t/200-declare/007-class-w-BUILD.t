@@ -29,7 +29,7 @@ is($foo_constructor->get_name, 'BUILD', '... got the right name for BUILD');
 
 my $foo = Foo->new( bar => "HELLO", BAR => ' World' );
 ok($foo->is_a( Foo ), '... this is a Foo');
-is($foo->class, Foo, '... this is a Foo');
+is(mop::class_for($foo), Foo, '... this is a Foo');
 
 is($foo->bar, "HELLO World", '... returns what it is given');
 

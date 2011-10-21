@@ -97,7 +97,7 @@ sub build_class {
 
     if ( $superclass ) {
         my $compatible = $class_Class->get_compatible_class(
-            $superclass->class
+            mop::class_for($superclass)
         );
         $class_Class = $compatible
             if defined $compatible;

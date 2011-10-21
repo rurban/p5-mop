@@ -14,8 +14,8 @@ ok $::Attribute, '... we have the class Attribute';
 
 # check the simple bootstrapped knot tie-ing
 
-is $::Object->class, $::Class, '... the class of Object is Class';
-is $::Class->class, $::Class, '... the class of Class is Class';
+is mop::class_for($::Object), $::Class, '... the class of Object is Class';
+is mop::class_for($::Class), $::Class, '... the class of Class is Class';
 
 ok $::Class->is_subclass_of( $::Object ), '... class Class is a subclass of Object';
 ok !$::Class->is_subclass_of( $::Class ), '... class Class is not a subclass of Class';
@@ -31,8 +31,8 @@ ok $::Object->is_a( $::Class ), '... class Object is-a Class';
 
 # check the other elements
 
-is $::Method->class, $::Class, '... the class of Method is Class';
-is $::Attribute->class, $::Class, '... the class of Attribute is Class';
+is mop::class_for($::Method), $::Class, '... the class of Method is Class';
+is mop::class_for($::Attribute), $::Class, '... the class of Attribute is Class';
 
 ok $::Method->is_subclass_of( $::Object ), '... class Method is a subclass of Object';
 ok $::Attribute->is_subclass_of( $::Object ), '... class Attribute is a subclass of Object';

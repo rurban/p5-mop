@@ -23,7 +23,7 @@ BEGIN {
     }
 }
 
-is FooMeta->class, $::Class, '... got the class we expected';
+is mop::class_for(FooMeta), $::Class, '... got the class we expected';
 ok FooMeta->is_a( $::Object ), '... FooMeta is an Object';
 ok FooMeta->is_a( $::Class ), '... FooMeta is a Class';
 ok FooMeta->is_subclass_of( $::Object ), '... FooMeta is a subclass of Object';
@@ -37,7 +37,7 @@ BEGIN {
     }
 }
 
-is Foo->class, FooMeta, '... got the class we expected';
+is mop::class_for(Foo), FooMeta, '... got the class we expected';
 ok Foo->is_a( $::Object ), '... Foo is an Object';
 ok Foo->is_a( $::Class ), '... Foo is a Class';
 ok Foo->is_a( FooMeta ), '... Foo is a FooMeta';
@@ -48,7 +48,7 @@ is Foo->static_method, 'STATIC', '... called the static method on Foo';
 # create an instance ...
 my $foo = Foo->new;
 
-is $foo->class, Foo, '... got the class we expected';
+is mop::class_for($foo), Foo, '... got the class we expected';
 ok $foo->is_a( Foo ), '... foo is a Foo';
 ok $foo->is_a( $::Object ), '... foo is an Object';
 ok !$foo->is_a( $::Class ), '... foo is not a Class';
@@ -57,7 +57,7 @@ ok !$foo->is_a( FooMeta ), '... foo is not a FooMeta';
 like exception { $foo->static_method }, qr/^Can\'t locate object method \"static_method\" via package/, '... got an expection here';
 
 is $foo->hello_from_class, 'STATIC', '... got the class method via the instance however';
-is $foo->class->static_method, 'STATIC', '... got access to the class method via the ->class instance method';
+is mop::class_for($foo)->static_method, 'STATIC', '... got access to the class method via class_for';
 is $foo->hello, 'FOO', '... got the instance method however';
 
 done_testing;

@@ -48,14 +48,14 @@ BEGIN {
     class Foo (metaclass => FooMeta) { }
 }
 
-is Foo->class, FooMeta, '... got the class we expected';
+is mop::class_for(Foo), FooMeta, '... got the class we expected';
 ok Foo->is_a( FooMeta ), '... Foo is a FooMeta';
 
 BEGIN {
     class FooSub (extends => Foo) { }
 }
 
-is FooSub->class, FooMeta, '... got the class we expected';
+is mop::class_for(FooSub), FooMeta, '... got the class we expected';
 ok FooSub->is_a( FooMeta ), '... FooSub is a FooMeta';
 
 BEGIN {
